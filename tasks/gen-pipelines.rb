@@ -123,10 +123,13 @@ if required.any? { |a| options[a].nil? }
   raise ArgumentError, "all arguments must be specified."
 end
 
+# create a secrets file with all the secret params
 secrets = ENV
   .select { |name| /^secret_/ =~ name }
-  .reduce({}) { |memo, name| memo[name[0].gsub(/^secret_/, '')] = name[1]; memo}
-
+  .reduce({}) do |memo, name|
+    memo[name[0].gsub(/^secret_/, '')] = name[1]
+    memo
+  end
 File.write SECRETS_FILE, (YAML.dump secrets)
 
 # for each yaml file found make a pipeline
@@ -143,7 +146,9 @@ pipelines = Dir
       # path we're gonna give to the general config
       pipeline_path = "pipeline-#{config['name']}.yaml"
       # dump the yaml into a file and return the path
-      File.write pipeline_path, (YAML.dump pipeline)
+      pipeline_config = YAML.dump pipeline
+      puts pipeline_config
+      File.write pipeline_path, (pipeline_config)
       # create the config for the pipeline
       {
         'name' => config['name'],
@@ -154,6 +159,8 @@ pipelines = Dir
     end
   .to_a
 
-File.write options[:pipelines_file], (YAML.dump ({
+pipelines_config = YAML.dump ({
   'pipelines' => pipelines
-}))
+})
+puts pipelines_config
+File.write options[:pipelines_file], pipelines_config
