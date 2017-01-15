@@ -159,8 +159,6 @@ pipelines = Dir
     end
   .to_a
 
-pipelines_config = YAML.dump ({
-  'pipelines' => pipelines
-})
+pipelines_config = YAML.dump pipelines
 puts pipelines_config
 File.write options[:pipelines_file], pipelines_config
