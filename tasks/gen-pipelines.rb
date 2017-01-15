@@ -3,6 +3,7 @@ require 'optparse'
 require 'yaml'
 
 DEFAULT_BRANCH = "master"
+SECRETS_FILE = "secrets.yaml"
 
 options = {}
 
@@ -88,36 +89,49 @@ class Pipeline
   end
 end
 
+required = []
+
 # parse command line options
 OptionParser.new do |parser|
   # get the domes dir
   parser.on('-d', '--domes-dir dir', 'Directory of the biodome files.') do |v|
     options[:domes_dir] = v
   end
+  required.push :domes_dir
 
   # get the output pipelines dir
   parser.on('-p', '--pipelines-file file', 'Pipelines file to write to.') do |v|
     options[:pipelines_file] = v
   end
+  required.push :pipelines_file
 
   # get the team name to build the pipeline on
   parser.on('-t', '--team name', 'Which team to use.') do |v|
     options[:team_name] = v
   end
+  required.push :team_name
 
   # get the team name to build the pipeline on
   parser.on('-w', '--working-dir dir', 'Dir to prefix when using relative paths.') do |v|
     options[:pwd] = v
   end
+  required.push :pwd
 end.parse!
 
 # all args are required
-if [:team_name, :domes_dir, :pipelines_file].any? { |a| options[a].nil? }
+if required.any? { |a| options[a].nil? }
   raise ArgumentError, "all arguments must be specified."
 end
 
+secrets = ENV
+  .select { |name| /^secret_/ =~ name }
+  .reduce({}) { |memo, name| memo[name[0].gsub(/^secret_/, '')] = name[1]; memo}
+
+File.write SECRETS_FILE, (YAML.dump secrets)
+
 # for each yaml file found make a pipeline
-pipelines = Dir.entries(options[:domes_dir])
+pipelines = Dir
+  .entries(options[:domes_dir])
   .select { |f| /(\.yaml|\.yml)$/ =~ f }
   .map do |dome|
       # parse the config file
@@ -135,6 +149,7 @@ pipelines = Dir.entries(options[:domes_dir])
         'name' => config['name'],
         'team' => options[:team_name],
         'config_file' => File.join(options[:pwd], pipeline_path),
+        'vars_files' => [File.join(options[:pwd], SECRETS_FILE)],
       }
     end
   .to_a

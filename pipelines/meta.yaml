@@ -49,6 +49,13 @@ jobs:
               path: ci
           outputs:
             - name: built-pipelines
+          params:
+            secret_dockerhub_email: {{dockerhub_email}}
+            secret_dockerhub_user: {{dockerhub_user}}
+            secret_dockerhub_pass: {{dockerhub_pass}}
+            secret_k8s_url: {{k8s_url}}
+            secret_k8s_user: {{k8s_user}}
+            secret_k8s_pass: {{k8s_pass}}
           run:
             path: ruby
             dir: built-pipelines
