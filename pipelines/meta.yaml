@@ -1,0 +1,44 @@
+resource_types:
+  - name: concourse-pipeline
+    type: docker-image
+    source:
+      repository: robdimsdale/concourse-pipeline-resource
+      tag: v0.7.0
+
+resources:
+  - name: main-pipelines
+    type: concourse-pipeline
+    source:
+      target: http://35.185.24.163:8080/
+      teams:
+        - name: main
+          username: {{team-main-user}}
+          password: {{team-main-pass}}
+
+  - name: biodomes
+    type: git
+    source:
+      uri: https://github.com/hackgt/biodomes.git
+      branch: master
+
+jobs:
+  - name: build-pipelines
+    plan:
+      - get: biodomes
+        trigger: true
+      - get: main-pipelines
+      - task: echo-hello
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: ruby
+              tag: 2.4.0
+          inputs:
+            - name: biodomes
+            - name: main-pipelines
+          run:
+            path: echo
+            args:
+              - Hello World
