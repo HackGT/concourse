@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'optparse'
 require 'yaml'
+require 'json'
 
 DEFAULT_BRANCH = "master"
 SECRETS_FILE = "secrets.yaml"
@@ -69,6 +70,9 @@ class Pipeline
           'params' => {
             'build' => app_name,
           },
+          'get_params' => {
+            'skip_download' => true,
+          },
         },
       ],
     })
@@ -87,6 +91,14 @@ class Pipeline
 
     pipeline
   end
+end
+
+
+def dump_yaml data
+  output = YAML.dump data
+  # ruby puts template vars as "{{var}}"
+  # but concourse only wants them as {{var}} for some reason
+  output.gsub(/("|')(\{\{.+\}\})("|')/, '\2')
 end
 
 required = []
@@ -130,7 +142,7 @@ secrets = ENV
     memo[name[0].gsub(/^secret_/, '')] = name[1]
     memo
   end
-File.write SECRETS_FILE, (YAML.dump secrets)
+File.write SECRETS_FILE, (dump_yaml secrets)
 
 # for each yaml file found make a pipeline
 pipelines = Dir
@@ -146,7 +158,7 @@ pipelines = Dir
       # path we're gonna give to the general config
       pipeline_path = "pipeline-#{config['name']}.yaml"
       # dump the yaml into a file and return the path
-      pipeline_config = YAML.dump pipeline
+      pipeline_config = dump_yaml pipeline
       puts pipeline_config
       File.write pipeline_path, (pipeline_config)
       # create the config for the pipeline
@@ -159,6 +171,8 @@ pipelines = Dir
     end
   .to_a
 
-pipelines_config = YAML.dump pipelines
+pipelines_config = dump_yaml ({
+  'pipelines' => pipelines,
+})
 puts pipelines_config
 File.write options[:pipelines_file], pipelines_config

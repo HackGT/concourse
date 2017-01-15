@@ -12,8 +12,8 @@ resources:
       target: http://35.185.24.163:8080/
       teams:
         - name: main
-          username: {{team-main-user}}
-          password: {{team-main-pass}}
+          username: {{team_main_user}}
+          password: {{team_main_pass}}
 
   - name: biodomes
     type: git
@@ -70,7 +70,5 @@ jobs:
               - '--working-dir'
               - built-pipelines
       - put: main-pipelines
-        input:
-          - built-pipelines
         params:
           pipelines_file: built-pipelines/pipelines.yaml
