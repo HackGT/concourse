@@ -106,7 +106,7 @@ OptionParser.new do |parser|
   end
 
   # get the team name to build the pipeline on
-  parser.on('-w', '--working-dir', 'Dir to prefix when using relative paths.') do |v|
+  parser.on('-w', '--working-dir dir', 'Dir to prefix when using relative paths.') do |v|
     options[:pwd] = v
   end
 end.parse!
