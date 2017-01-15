@@ -118,7 +118,7 @@ pipelines = Dir.entries(options[:domes_dir])
       # parse the config file
       config_text = File.read(File.join options[:domes_dir], dome)
       config = YAML.load config_text
-      config['name'] = File.basename(dome, File.extname dome)
+      config['name'] = File.basename(dome, File.extname(dome))
       # make a pipeline config out of it
       pipeline = Pipeline.build_pipeline config
       # path we're gonna give to the general config

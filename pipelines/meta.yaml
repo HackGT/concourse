@@ -21,6 +21,11 @@ resources:
       uri: https://github.com/hackgt/biodomes.git
       branch: master
 
+  - name: concourse-config
+    type: git
+      uri: https://github.com/hackgt/concourse.git
+      branch: master
+
 jobs:
   - name: build-pipelines
     plan:
@@ -37,8 +42,18 @@ jobs:
               tag: 2.4.0
           inputs:
             - name: biodomes
-            - name: main-pipelines
+            - name: concourse-config
+              path: ci
+          outputs:
+            - name: pipelines-output
           run:
-            path: echo
+            path: ruby
+            dir: pipelines-output
             args:
-              - Hello World
+              - ci/tasks/gen-pipelines.rb
+              - '--team'
+              - main
+              - '--pipelines-file'
+              - pipelines.yaml
+              - '--domes-dir'
+              - biodomes
