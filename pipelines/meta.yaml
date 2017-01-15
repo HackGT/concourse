@@ -23,16 +23,19 @@ resources:
 
   - name: concourse-config
     type: git
+    source:
       uri: https://github.com/hackgt/concourse.git
       branch: master
 
 jobs:
   - name: build-pipelines
     plan:
-      - get: biodomes
-        trigger: true
-      - get: main-pipelines
-      - task: echo-hello
+      - aggregate:
+        - get: biodomes
+          trigger: true
+        - get: concourse-config
+          trigger: true
+      - task: generate-pipelines
         config:
           platform: linux
           image_resource:
@@ -45,15 +48,22 @@ jobs:
             - name: concourse-config
               path: ci
           outputs:
-            - name: pipelines-output
+            - name: built-pipelines
           run:
             path: ruby
-            dir: pipelines-output
+            dir: built-pipelines
             args:
-              - ci/tasks/gen-pipelines.rb
+              - ../ci/tasks/gen-pipelines.rb
               - '--team'
               - main
               - '--pipelines-file'
               - pipelines.yaml
               - '--domes-dir'
-              - biodomes
+              - ../biodomes
+              - '--working-dir'
+              - built-pipelines
+      - put: main-pipelines
+        input:
+          - built-pipelines
+        params:
+          pipelines_file: built-pipelines/pipelines.yaml

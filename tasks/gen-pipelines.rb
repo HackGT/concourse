@@ -100,9 +100,14 @@ OptionParser.new do |parser|
     options[:pipelines_file] = v
   end
 
-  # get the output pipelines dir
+  # get the team name to build the pipeline on
   parser.on('-t', '--team name', 'Which team to use.') do |v|
     options[:team_name] = v
+  end
+
+  # get the team name to build the pipeline on
+  parser.on('-w', '--working-dir', 'Dir to prefix when using relative paths.') do |v|
+    options[:pwd] = v
   end
 end.parse!
 
@@ -129,7 +134,7 @@ pipelines = Dir.entries(options[:domes_dir])
       {
         'name' => config['name'],
         'team' => options[:team_name],
-        'config_file' => pipeline_path,
+        'config_file' => File.join(options[:pwd], pipeline_path),
       }
     end
   .to_a
