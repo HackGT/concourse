@@ -2,105 +2,16 @@
 require 'optparse'
 require 'yaml'
 require 'json'
+require 'erb'
 
+#############
+# CLI STUFF #
+#############
 DEFAULT_BRANCH = "master"
 SECRETS_FILE = "secrets.yaml"
+SOURCE_DIR = File.expand_path(File.dirname(__FILE__))
 
 options = {}
-
-
-class Pipeline
-  def self.merge_pipelines main, augment
-    [
-      'resources',
-      'resource_types',
-      'jobs',
-      'groups',
-    ]
-    .each do |header|
-      # combine the two, remove duplicates
-      main[header] = main[header] | augment[header]
-    end
-    main
-  end
-
-
-  def self.build_app_pipeline app
-    app_name = File.basename app['name']
-
-    pipeline = {
-      'resources' => [
-        # make sure we have a copy of the code
-        {
-          'name' => app_name,
-          'type' => 'git',
-          'source' => {
-            'uri' => "https://github.com/#{app['name']}.git",
-            'branch' => (app.include?('branch') ? app['branch'] : DEFAULT_BRANCH),
-          }
-        },
-        # define the final place to put the built image
-        {
-          'name' => "#{app_name}-image",
-          'type' => 'docker-image',
-          'source' => {
-            'repository' => app['name'],
-            'email' => '{{dockerhub_email}}',
-            'username' => '{{dockerhub_user}}',
-            'password' => '{{dockerhub_pass}}',
-          },
-        },
-      ],
-      'jobs' => [],
-    }
-
-    # TODO: when we have something with tests, this section will add a testing
-    # step to the process, for now just build it
-
-    # Step: build docker image and push to docker hub
-    pipeline['jobs'].push({
-      'name' => "#{app_name}-build-image",
-      'plan' => [
-        {
-          'get' => app_name,
-          'trigger' => true,
-        },
-        {
-          'put' => "#{app_name}-image",
-          'params' => {
-            'build' => app_name,
-          },
-          'get_params' => {
-            'skip_download' => true,
-          },
-        },
-      ],
-    })
-
-    pipeline
-  end
-
-
-  def self.build_pipeline config
-    # add individual steps for each app
-    pipeline = config['apps']
-      .map { |app| Pipeline.build_app_pipeline app }
-      .reduce { |memo, aug| Pipeline.merge_pipelines memo, aug }
-
-    # TODO: add step to add everything to k8s
-
-    pipeline
-  end
-end
-
-
-def dump_yaml data
-  output = YAML.dump data
-  # ruby puts template vars as "{{var}}"
-  # but concourse only wants them as {{var}} for some reason
-  output.gsub(/("|')(\{\{.+\}\})("|')/, '\2')
-end
-
 required = []
 
 # parse command line options
@@ -133,6 +44,44 @@ end.parse!
 # all args are required
 if required.any? { |a| options[a].nil? }
   raise ArgumentError, "all arguments must be specified."
+end
+
+
+
+##########
+#  LOGIC #
+##########
+class Pipeline
+  def self.merge_pipelines main, augment
+    ['resources', 'resource_types', 'jobs', 'groups'].each do |header|
+      # combine the two, remove duplicates
+      main[header] = main[header] | augment[header]
+    end
+    main
+  end
+
+
+  def self.build_app_pipeline app
+    app_template = File.join SOURCE_DIR, '../templates/app-pipeline.yaml.erb'
+    app['basename'] = File.basename app['name']
+    YAML.load ERB.new(File.read app_template).result(binding)
+  end
+
+
+  def self.build_pipeline config
+    # add individual steps for each app
+    config['apps']
+      .map { |app| Pipeline.build_app_pipeline app }
+      .reduce { |memo, aug| Pipeline.merge_pipelines memo, aug }
+  end
+end
+
+
+def dump_yaml data
+  output = YAML.dump data
+  # ruby puts template vars as "{{var}}"
+  # but concourse only wants them as {{var}} for some reason
+  output.gsub(/("|')(\{\{.+\}\})("|')/, '\2')
 end
 
 # create a secrets file with all the secret params
