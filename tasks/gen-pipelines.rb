@@ -48,9 +48,9 @@ end
 
 
 
-##########
-#  LOGIC #
-##########
+################
+# MAIN PROGRAM #
+################
 class Pipeline
   def self.merge_pipelines main, augment
     ['resources', 'resource_types', 'jobs', 'groups'].each do |header|

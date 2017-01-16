@@ -1,3 +1,9 @@
+resource_types:
+- name: k8s-resource
+  type: docker-image
+  source:
+    repository: frodenas/k8s-resource
+
 resources:
 - name: <%= app['basename'] %>
   type: git
@@ -13,6 +19,14 @@ resources:
     username: "{{dockerhub_user}}"
     password: "{{dockerhub_pass}}"
 
+- name: hackgt-cluster
+  type: k8s-resource
+  source:
+    url: "{{k8s_url}}"
+    username: "{{k8s_user}}"
+    password: "{{k8s_pass}}"
+    namespace: default
+    skip_tls_verify: true
 
 jobs:
 - name: <%= app['basename'] %>-build-image
@@ -24,3 +38,6 @@ jobs:
       build: <%= app['basename'] %>
     get_params:
       skip_download: true
+  - put: hackgt-cluster
+    params:
+      spec_path: <%= app['basename'] %>/deployment.yml
