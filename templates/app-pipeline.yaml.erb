@@ -4,42 +4,77 @@ resource_types:
   source:
     repository: frodenas/k8s-resource
 
-resources:
-- name: <%= app['basename'] %>
-  type: git
-  source:
-    uri: https://github.com/<%= app['name'] %>.git
-    branch: <%= app['branch'].nil? ? 'master' : app['branch'] %>
-
-- name: <%= app['basename'] %>-image
+<% if app.include? 'helm' %>
+- name: helm-resource
   type: docker-image
   source:
-    repository: <%= app['name'] %>
+    repository: hackgt/helm-resource
+<% end %>
+
+resources:
+<% if app.include? 'git' %>
+- name: <%= app['name'] %>
+  type: git
+  source:
+    uri: <%= app['git'] %>
+    branch: <%= app['branch'].nil? ? 'master' : app['branch'] %>
+
+- name: <%= app['name'] %>-image
+  type: docker-image
+  source:
+    repository: <%= git_to_shortname app['git'] %>
     email: "{{dockerhub_email}}"
     username: "{{dockerhub_user}}"
     password: "{{dockerhub_pass}}"
 
+  <% if app.include? 'run' %>
 - name: hackgt-cluster
   type: k8s-resource
   source:
     url: "{{k8s_url}}"
+    ca_data: "{{k8s_ca_data}}"
     username: "{{k8s_user}}"
     password: "{{k8s_pass}}"
     namespace: default
-    skip_tls_verify: true
+  <% end %>
+<% end %>
+
+<% if app.include? 'helm' %>
+- name: helm
+  type: helm-resource
+  source:
+    url: "{{k8s_url}}"
+    ca_data: "{{k8s_ca_data}}"
+    username: "{{k8s_user}}"
+    password: "{{k8s_pass}}"
+    namespace: default
+<% end %>
 
 jobs:
-- name: <%= app['basename'] %>-build-image
+<% if app.include? 'git' %>
+- name: build-<%= app['name'] %>-image
   plan:
-  - get: <%= app['basename'] %>
+  - get: <%= app['name'] %>
     trigger: true
-  - put: <%= app['basename'] %>-image
+  - put: <%= app['name'] %>-image
     params:
-      build: <%= app['basename'] %>
+      build: <%= app['name'] %>
     get_params:
       skip_download: true
-  <% if !app['run'].nil? %>
+  <% if app.include? 'run' %>
   - put: hackgt-cluster
     params:
-      spec_path: <%= app['basename'] %>/deployment.yml
+      spec_path: <%= app['name'] %>/deployment.yml
   <% end %>
+<% elsif app.include? 'helm' %>
+- name: install-<%= app['name'] %>
+  plan:
+  - put: helm
+    params:
+      charts:
+        <%= app['name'] %>:
+          name: <%= app['helm'] %>
+          <% if app.include? 'version' %>
+          version: <%= app['version'] %>
+          <% end %>
+<% end %>

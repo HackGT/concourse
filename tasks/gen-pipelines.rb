@@ -3,6 +3,7 @@ require 'optparse'
 require 'yaml'
 require 'json'
 require 'erb'
+require 'uri'
 
 #############
 # CLI STUFF #
@@ -10,6 +11,7 @@ require 'erb'
 DEFAULT_BRANCH = "master"
 SECRETS_FILE = "secrets.yaml"
 SOURCE_DIR = File.expand_path(File.dirname(__FILE__))
+APP_TEMPLATE = File.join SOURCE_DIR, '../templates/app-pipeline.yaml.erb'
 
 options = {}
 required = []
@@ -63,10 +65,14 @@ class Pipeline
   end
 
 
+  def self.git_to_shortname git_url
+    uri = URI.parse git_url
+    uri.path.chomp(File.extname(uri.path)).sub(/^\//, '')
+  end
+
+
   def self.build_app_pipeline app
-    app_template = File.join SOURCE_DIR, '../templates/app-pipeline.yaml.erb'
-    app['basename'] = File.basename app['name']
-    YAML.load ERB.new(File.read app_template).result(binding)
+    YAML.load ERB.new(File.read APP_TEMPLATE).result(binding)
   end
 
 
