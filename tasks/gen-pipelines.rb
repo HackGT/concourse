@@ -12,6 +12,7 @@ DEFAULT_BRANCH = "master"
 SECRETS_FILE = "secrets.yaml"
 SOURCE_DIR = File.expand_path(File.dirname(__FILE__))
 APP_TEMPLATE = File.join SOURCE_DIR, '../templates/app-pipeline.yaml.erb'
+PIPELINE_TEMPLATE = File.join SOURCE_DIR, '../templates/pipeline.yaml.erb'
 
 options = {}
 required = []
@@ -58,7 +59,7 @@ class Pipeline
     ['resources', 'resource_types', 'jobs', 'groups'].each do |header|
       if main.include? header or augment.include? header
         # combine the two, remove duplicates
-        main[header] = main[header] | augment[header]
+        main[header] = (main[header] || []) | (augment[header] || [])
       end
     end
     main
@@ -71,7 +72,7 @@ class Pipeline
   end
 
 
-  def self.build_app_pipeline app, pipeline
+  def self.build_app_pipeline app
     YAML.load ERB.new(File.read APP_TEMPLATE).result(binding)
   end
 
@@ -79,17 +80,20 @@ class Pipeline
   def self.build_pipeline config, config_path
     # get metadata of the pipeline file
     full_config_path = File.expand_path config_path
-    pipeline_data = Dir.chdir(File.expand_path(File.dirname config_path)) {
+    pipeline = Dir.chdir(File.expand_path(File.dirname config_path)) {
       {
         :git_ref => `git show-ref --head -s -- HEAD | head -1`,
         :git_path => `git ls-tree --full-name --name-only HEAD #{full_config_path}`,
         :git_remote => `git config --get remote.origin.url`,
+        :charts => config['apps'].select {|a| a.include? 'helm'},
       }
     }
+    pipe_cfg = YAML.load ERB.new(File.read PIPELINE_TEMPLATE).result(binding)
+
     # add individual steps for each app
     config['apps']
-      .map { |app| Pipeline.build_app_pipeline app, pipeline_data }
-      .reduce { |memo, aug| Pipeline.merge_pipelines memo, aug }
+      .map { |app| Pipeline.build_app_pipeline app }
+      .reduce(pipe_cfg) { |memo, aug| Pipeline.merge_pipelines memo, aug }
   end
 end
 

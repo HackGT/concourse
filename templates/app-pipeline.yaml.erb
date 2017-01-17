@@ -1,14 +1,9 @@
 resource_types:
+<% if app.include? 'run' %>
 - name: k8s-resource
   type: docker-image
   source:
     repository: frodenas/k8s-resource
-
-<% if app.include? 'helm' %>
-- name: helm-resource
-  type: docker-image
-  source:
-    repository: hackgt/helm-resource
 <% end %>
 
 resources:
@@ -39,27 +34,6 @@ resources:
   <% end %>
 <% end %>
 
-<% if app.include? 'helm' %>
-- name: helm
-  type: helm-resource
-  source:
-    url: "{{k8s_url}}"
-    ca_data: "{{k8s_ca_data}}"
-    username: "{{k8s_user}}"
-    password: "{{k8s_pass}}"
-    namespace: default
-
-- name: pipeline-updates
-  type: git
-  source:
-    uri: <%= pipeline[:git_remote] %>
-    branch: master
-    version:
-      ref: <%= pipeline[:git_ref] %>
-    paths:
-      - <%= pipeline[:git_path] %>
-<% end %>
-
 jobs:
 <% if app.include? 'git' %>
 - name: build-<%= app['name'] %>-image
@@ -76,19 +50,4 @@ jobs:
     params:
       spec_path: <%= app['name'] %>/deployment.yml
   <% end %>
-<% elsif app.include? 'helm' %>
-- name: install-<%= app['name'] %>
-  plan:
-  - get: pipeline-updates
-    trigger: true
-  - get: helm
-    trigger: true
-  - put: helm
-    params:
-      charts:
-        <%= app['name'] %>:
-          name: <%= app['helm'] %>
-          <% if app.include? 'version' %>
-          version: <%= app['version'] %>
-          <% end %>
 <% end %>
