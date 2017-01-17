@@ -54,8 +54,10 @@ end
 class Pipeline
   def self.merge_pipelines main, augment
     ['resources', 'resource_types', 'jobs', 'groups'].each do |header|
-      # combine the two, remove duplicates
-      main[header] = main[header] | augment[header]
+      if main.include? header or augment.include? header
+        # combine the two, remove duplicates
+        main[header] = main[header] | augment[header]
+      end
     end
     main
   end
