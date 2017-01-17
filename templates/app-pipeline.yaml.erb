@@ -32,7 +32,7 @@ resources:
   type: k8s-resource
   source:
     url: "{{k8s_url}}"
-    ca_data: "{{k8s_ca_data}}"
+    skip_tls_verify: true
     username: "{{k8s_user}}"
     password: "{{k8s_pass}}"
     namespace: default

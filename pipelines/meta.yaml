@@ -56,6 +56,7 @@ jobs:
             secret_k8s_url: {{k8s_url}}
             secret_k8s_user: {{k8s_user}}
             secret_k8s_pass: {{k8s_pass}}
+            secret_k8s_ca_data: {{k8s_ca_data}}
           run:
             path: ruby
             dir: built-pipelines
