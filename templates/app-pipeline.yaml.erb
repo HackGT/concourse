@@ -17,7 +17,7 @@ resources:
 - name: <%= app['name'] %>-image
   type: docker-image
   source:
-    repository: <%= git_to_shortname app['git'] %>
+    repository: <%= git_to_shortname(app['git']).downcase %>
     email: "{{dockerhub_email}}"
     username: "{{dockerhub_user}}"
     password: "{{dockerhub_pass}}"
