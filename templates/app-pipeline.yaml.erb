@@ -48,6 +48,16 @@ resources:
     username: "{{k8s_user}}"
     password: "{{k8s_pass}}"
     namespace: default
+
+- name: pipeline-updates
+  type: git
+  source:
+    uri: <%= pipeline[:git_remote] %>
+    branch: master
+    version:
+      ref: <%= pipeline[:git_ref] %>
+    paths:
+      - <%= pipeline[:git_path] %>
 <% end %>
 
 jobs:
@@ -69,6 +79,10 @@ jobs:
 <% elsif app.include? 'helm' %>
 - name: install-<%= app['name'] %>
   plan:
+  - get: pipeline-updates
+    trigger: true
+  - get: helm
+    trigger: true
   - put: helm
     params:
       charts:

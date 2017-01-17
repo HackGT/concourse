@@ -71,15 +71,24 @@ class Pipeline
   end
 
 
-  def self.build_app_pipeline app
+  def self.build_app_pipeline app, pipeline
     YAML.load ERB.new(File.read APP_TEMPLATE).result(binding)
   end
 
 
-  def self.build_pipeline config
+  def self.build_pipeline config, config_path
+    # get metadata of the pipeline file
+    full_config_path = File.expand_path config_path
+    pipeline_data = Dir.chdir(File.expand_path(File.dirname config_path)) {
+      {
+        :git_ref => `git show-ref --head -s -- HEAD | head -1`,
+        :git_path => `git ls-tree --full-name --name-only HEAD #{full_config_path}`,
+        :git_remote => `git config --get remote.origin.url`,
+      }
+    }
     # add individual steps for each app
     config['apps']
-      .map { |app| Pipeline.build_app_pipeline app }
+      .map { |app| Pipeline.build_app_pipeline app, pipeline_data }
       .reduce { |memo, aug| Pipeline.merge_pipelines memo, aug }
   end
 end
@@ -107,11 +116,12 @@ pipelines = Dir
   .select { |f| /(\.yaml|\.yml)$/ =~ f }
   .map do |dome|
       # parse the config file
-      config_text = File.read(File.join options[:domes_dir], dome)
+      config_path = File.join options[:domes_dir], dome
+      config_text = File.read config_path
       config = YAML.load config_text
       config['name'] = File.basename(dome, File.extname(dome))
       # make a pipeline config out of it
-      pipeline = Pipeline.build_pipeline config
+      pipeline = Pipeline.build_pipeline config, config_path
       # path we're gonna give to the general config
       pipeline_path = "pipeline-#{config['name']}.yaml"
       # dump the yaml into a file and return the path
