@@ -38,6 +38,8 @@ jobs:
       build: <%= app['basename'] %>
     get_params:
       skip_download: true
+  <% if !app['run'].nil? %>
   - put: hackgt-cluster
     params:
       spec_path: <%= app['basename'] %>/deployment.yml
+  <% end %>
