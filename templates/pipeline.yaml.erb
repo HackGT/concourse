@@ -62,7 +62,7 @@ jobs:
   <% end %>
   - aggregate:
       <% for app in pipeline[:runnables] %>
-      do:
+      - do:
         - get: <%= app['name'] %>-image
           trigger: true
           passes: [build-<%= app['name'] %>-image]
