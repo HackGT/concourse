@@ -6,6 +6,13 @@ resource_types:
     repository: hackgt/helm-resource
 <% end %>
 
+<% if pipeline[:runnables].length > 0 %>
+- name: k8s-resource
+  type: docker-image
+  source:
+    repository: frodenas/k8s-resource
+<% end %>
+
 resources:
 <% if pipeline[:charts].length > 0 %>
 - name: helm
@@ -63,11 +70,9 @@ jobs:
   - aggregate:
       <% for app in pipeline[:runnables] %>
       - do:
-        - get: <%= app['name'] %>-image
+        - get: <%= app['name'] %>
           trigger: true
           passes: [build-<%= app['name'] %>-image]
-          params:
-            skip_download: true
         - put: hackgt-cluster
           params:
             spec_path: <%= app['name'] %>/deployment.yml

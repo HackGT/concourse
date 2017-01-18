@@ -1,11 +1,3 @@
-resource_types:
-<% if app.include? 'run' %>
-- name: k8s-resource
-  type: docker-image
-  source:
-    repository: frodenas/k8s-resource
-<% end %>
-
 resources:
 <% if app.include? 'git' %>
 - name: <%= app['name'] %>
