@@ -72,7 +72,7 @@ jobs:
       - do:
         - get: <%= app['name'] %>
           trigger: true
-          passes: [build-<%= app['name'] %>-image]
+          passed: [build-<%= app['name'] %>-image]
         - put: hackgt-cluster
           params:
             spec_path: <%= app['name'] %>/deployment.yml
