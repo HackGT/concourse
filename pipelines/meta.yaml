@@ -29,6 +29,7 @@ resources:
 
 jobs:
   - name: build-pipelines
+    public: true
     plan:
       - aggregate:
         - get: biodomes

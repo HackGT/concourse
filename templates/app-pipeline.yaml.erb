@@ -18,6 +18,7 @@ resources:
 jobs:
 <% if app.include? 'git' %>
 - name: build-<%= app['name'] %>-image
+  public: true
   plan:
   - get: <%= app['name'] %>
     trigger: true

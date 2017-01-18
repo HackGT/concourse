@@ -49,6 +49,7 @@ resources:
 jobs:
 <% if pipeline[:runnables].length > 0 %>
 - name: deploy
+  public: true
   plan:
   <% if pipeline[:charts].length > 0 %>
   - aggregate:
