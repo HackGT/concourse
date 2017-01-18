@@ -86,6 +86,7 @@ class Pipeline
         :git_path => `git ls-tree --full-name --name-only HEAD #{full_config_path}`,
         :git_remote => `git config --get remote.origin.url`,
         :charts => config['apps'].select {|a| a.include? 'helm'},
+        :runnables => config['apps'].select {|a| a.include? 'run'},
       }
     }
     pipe_cfg = YAML.load ERB.new(File.read PIPELINE_TEMPLATE).result(binding)

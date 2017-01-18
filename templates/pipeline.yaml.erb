@@ -1,5 +1,5 @@
 resource_types:
-<% if pipeline.include? :charts %>
+<% if pipeline[:charts].length > 0 %>
 - name: helm-resource
   type: docker-image
   source:
@@ -7,7 +7,7 @@ resource_types:
 <% end %>
 
 resources:
-<% if pipeline.include? :charts %>
+<% if pipeline[:charts].length > 0 %>
 - name: helm
   type: helm-resource
   source:
@@ -17,7 +17,7 @@ resources:
     password: "{{k8s_pass}}"
     namespace: default
 
-- name: pipeline-updates
+- name: helm-charts
   type: git
   source:
     uri: <%= pipeline[:git_remote] %>
@@ -28,14 +28,27 @@ resources:
       - <%= pipeline[:git_path] %>
 <% end %>
 
+<% if pipeline[:runnables].length > 0 %>
+- name: hackgt-cluster
+  type: k8s-resource
+  source:
+    url: "{{k8s_url}}"
+    skip_tls_verify: true
+    username: "{{k8s_user}}"
+    password: "{{k8s_pass}}"
+    namespace: default
+<% end %>
+
 jobs:
-<% if pipeline.include? :charts %>
-- name: install-charts
+<% if pipeline[:runnables].length > 0 %>
+- name: deploy
   plan:
-  - get: pipeline-updates
-    trigger: true
-  - get: helm
-    trigger: true
+  <% if pipeline[:charts].length > 0 %>
+  - aggregate:
+    - get: helm-charts
+      trigger: true
+    - get: helm
+      trigger: true
   - put: helm
     params:
       charts:
@@ -45,5 +58,18 @@ jobs:
           <% if chart.include? 'version' %>
           version: <%= chart['version'] %>
           <% end %>
+      <% end %>
+  <% end %>
+  - aggregate:
+      <% for app in pipeline[:runnables] %>
+      do:
+        - get: <%= app['name'] %>-image
+          trigger: true
+          passes: [build-<%= app['name'] %>-image]
+          params:
+            skip_download: true
+        - put: hackgt-cluster
+          params:
+            spec_path: <%= app['name'] %>/deployment.yml
       <% end %>
 <% end %>

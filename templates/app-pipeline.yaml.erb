@@ -21,17 +21,6 @@ resources:
     email: "{{dockerhub_email}}"
     username: "{{dockerhub_user}}"
     password: "{{dockerhub_pass}}"
-
-  <% if app.include? 'run' %>
-- name: hackgt-cluster
-  type: k8s-resource
-  source:
-    url: "{{k8s_url}}"
-    skip_tls_verify: true
-    username: "{{k8s_user}}"
-    password: "{{k8s_pass}}"
-    namespace: default
-  <% end %>
 <% end %>
 
 jobs:
@@ -45,9 +34,4 @@ jobs:
       build: <%= app['name'] %>
     get_params:
       skip_download: true
-  <% if app.include? 'run' %>
-  - put: hackgt-cluster
-    params:
-      spec_path: <%= app['name'] %>/deployment.yml
-  <% end %>
 <% end %>
