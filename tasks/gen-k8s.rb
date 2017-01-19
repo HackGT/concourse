@@ -33,6 +33,8 @@ env = biodome_config['apps']
 deployment = {
   :env => env,
   :apps => apps,
+  :biodome => File.basename(biodome_file, File.extname(biodome_file)),
+  :domain => biodome_config['domain'],
 }
 
 output = ERB.new(File.read KUBE_TEMPLATE).result(binding)
