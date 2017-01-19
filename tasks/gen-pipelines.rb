@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'optparse'
 require 'yaml'
-require 'json'
 require 'erb'
 require 'uri'
 
