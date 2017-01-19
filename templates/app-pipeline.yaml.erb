@@ -22,27 +22,6 @@ jobs:
   plan:
   - get: <%= app['name'] %>
     trigger: true
-  - try:
-      task: build-<%= app['name'] %>
-      file: <%= app['name'] %>/build.yaml
-  - try:
-      task: move-build-output
-      config:
-        platform: linux
-        image_resource:
-          type: docker-image
-          source:
-            repository: busybox
-        inputs:
-        - name: build-output
-        outputs:
-        - name: <%= app['name'] %>
-        run:
-          path: cp
-          args:
-            - -a
-            - build-output/
-            - <%= app['name'] %>/
   - put: <%= app['name'] %>-image
     params:
       build: <%= app['name'] %>

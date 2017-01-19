@@ -37,6 +37,12 @@ resources:
 <% end %>
 
 <% if pipeline[:runnables].length > 0 %>
+- name: concourse-config
+  type: git
+  source:
+    uri: https://github.com/hackgt/concourse.git
+    branch: master
+
 - name: hackgt-cluster
   type: k8s-resource
   source:
@@ -45,12 +51,6 @@ resources:
     username: "{{k8s_user}}"
     password: "{{k8s_pass}}"
     namespace: default
-
-- name: concourse-config
-  type: git
-  source:
-    uri: https://github.com/hackgt/concourse.git
-    branch: master
 <% end %>
 
 jobs:
