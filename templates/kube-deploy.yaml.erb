@@ -1,0 +1,44 @@
+<% for app in deployment[:apps] %>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: <%= app[:name] %>
+  name: <%= app[:name] %>-service
+spec:
+  ports:
+    - name: <%= app[:name] %>-port
+      port: <%= app[:port] %>
+      protocol: <%= app[:protocol] %>
+      targetPort: <%= app[:unique_port] %>
+  selector:
+    name: <%= app[:name] %>
+  type: LoadBalancer
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: <%= app[:name] %>
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: <%= app[:name] %>
+      labels:
+        name: <%= app[:name] %>
+    spec:
+      containers:
+      - name: <%= app[:name] %>-container
+        image: <%= app[:dockerhub] %>
+        ports:
+        - name: <%= app[:name] %>-port
+          containerPort: <%= app[:unique_port] %>
+        env:
+        - name: PORT
+          value: "<%= app[:unique_port] %>"
+        <% for name, value in deployment[:env] %>
+        - name: <%= name %>
+          value: <%= value %>
+        <% end %>
+<% end %>

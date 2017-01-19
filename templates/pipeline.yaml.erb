@@ -13,6 +13,7 @@ resource_types:
     repository: frodenas/k8s-resource
 <% end %>
 
+
 resources:
 <% if pipeline[:charts].length > 0 %>
 - name: helm
@@ -44,6 +45,12 @@ resources:
     username: "{{k8s_user}}"
     password: "{{k8s_pass}}"
     namespace: default
+
+- name: concourse-config
+  type: git
+  source:
+    uri: https://github.com/hackgt/concourse.git
+    branch: master
 <% end %>
 
 jobs:
@@ -69,13 +76,34 @@ jobs:
       <% end %>
   <% end %>
   - aggregate:
+    <% for app in pipeline[:runnables] %>
+    - get: <%= app['name'] %>
+      trigger: true
+      passed: [build-<%= app['name'] %>-image]
+    <% end %>
+  - task: build-k8s-config
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: frolvlad/alpine-ruby
+      inputs:
+      - name: helm-charts
+      - name: concourse-config
       <% for app in pipeline[:runnables] %>
-      - do:
-        - get: <%= app['name'] %>
-          trigger: true
-          passed: [build-<%= app['name'] %>-image]
-        - put: hackgt-cluster
-          params:
-            spec_path: <%= app['name'] %>/deployment.yml
+      - name: <%= app['name'] %>
       <% end %>
+      outputs:
+      - name: built-config
+      params:
+        BIODOME_FILE: helm-charts/<%= pipeline[:git_path] %>
+        OUTPUT_FILE: built-config/deployment.yaml
+      run:
+        path: ruby
+        args:
+          - concourse-config/tasks/gen-k8s.rb
+  - put: hackgt-cluster
+    params:
+      spec_path: built-config/deployment.yaml
 <% end %>
