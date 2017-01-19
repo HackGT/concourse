@@ -81,6 +81,8 @@ jobs:
       trigger: true
       passed: [build-<%= app['name'] %>-image]
     <% end %>
+    - get: concourse-config
+      trigger: true
   - task: build-k8s-config
     config:
       platform: linux
