@@ -22,8 +22,38 @@ jobs:
   plan:
   - get: <%= app['name'] %>
     trigger: true
+  <% if app['config']['build'] %>
+  <% build = app['config']['build'] %>
+  - task: build-<%= app['name'] %>
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: <%= build['docker']['repo'] %>
+          tag: <%= build['docker']['tag'] %>
+      inputs:
+      - name: <%= app['name'] %>
+      outputs:
+      - name: build-output
+      <% for name, val in (build['params'] || []) %>
+      params:
+        <%= name %>: <%= val %>
+      <% end %>
+      run:
+        path: bash
+        dir: build-output
+        args:
+          - -c
+          - cp -a ../<%= app['name'] %>/{.??,}* . ; <%= build['run'] %>
+  <% end %>
   - put: <%= app['name'] %>-image
     params:
-      build: <%= app['name'] %>
+      build: >
+        <% if app['config']['build'] %>
+          build-output
+        <% else %>
+          <%= app['name'] %>
+        <% end %>
     get_params:
       skip_download: true
