@@ -1,3 +1,5 @@
+<% git_apps = biodome['apps'].select { |a| a.include? 'git' } %>
+
 resource_types:
   - name: concourse-pipeline
     type: docker-image
@@ -12,8 +14,8 @@ resources:
       target: http://35.185.24.163:8080/
       teams:
         - name: main
-          username: {{team_main_user}}
-          password: {{team_main_pass}}
+          username: "{{team_main_user}}"
+          password: "{{team_main_pass}}"
 
   - name: biodomes
     type: git
@@ -27,13 +29,21 @@ resources:
       uri: https://github.com/hackgt/concourse.git
       branch: master
 
+  <% for app in git_apps %>
+  - name: <%= app['name'] %>
+    type: git
+    source:
+      uri: <%= app['git'] %>
+      branch: <%= app['branch'] || DEFAULT_BRANCH %>
+  <% end %>
+
 groups:
-- name: meta
+- name: <%= biodome[:biodome] %>
   jobs:
-  - build-meta-pipeline
+  - build-<%= biodome[:biodome] %>-pipeline
 
 jobs:
-  - name: build-meta-pipeline
+  - name: build-<%= biodome[:biodome] %>-pipeline
     public: true
     plan:
       - aggregate:
@@ -41,7 +51,11 @@ jobs:
           trigger: true
         - get: concourse-config
           trigger: true
-      - task: generate-meta-pipeline
+        <% for app in git_apps %>
+        - get: <%= app['name'] %>
+          trigger: true
+        <% end %>
+      - task: generate-<%= biodome[:biodome] %>-pipeline
         config:
           platform: linux
           image_resource:
@@ -50,29 +64,26 @@ jobs:
               repository: ruby
               tag: 2.4.0
           inputs:
+            <% for app in git_apps %>
+            - name: <%= app['name'] %>
+            <% end %>
             - name: biodomes
             - name: concourse-config
               path: ci
           outputs:
-            - name: built-pipeline
+            - name: built-pipelines
           params:
-            secret_dockerhub_email: {{dockerhub_email}}
-            secret_dockerhub_user: {{dockerhub_user}}
-            secret_dockerhub_pass: {{dockerhub_pass}}
-            secret_k8s_url: {{k8s_url}}
-            secret_k8s_user: {{k8s_user}}
-            secret_k8s_pass: {{k8s_pass}}
-            secret_k8s_ca_data: {{k8s_ca_data}}
-            secret_team_main_user: {{team_main_user}}
-            secret_team_main_pass: {{team_main_pass}}
+            <% for secret in biodome[:secrets] %>
+            secret_<%= secret %>: "{{<%= secret %>}}"
+            <% end %>
             PIPEDREAM_TEAM: main
-            PIPEDREAM_OUT_DIR: built-pipeline
+            PIPEDREAM_OUT_DIR: built-pipelines
             PIPEDREAM_OUT_FILE: pipelines.yaml
             PIPEDREAM_BIODOMES_DIR: biodomes
           run:
             path: ruby
             args:
-              - ci/tasks/generate-meta-pipelines.rb
-      - put: main-pipeline
+              - ci/tasks/generate-pipelines.rb
+      - put: main-pipelines
         params:
-          pipelines_file: built-pipeline/pipelines.yaml
+          pipelines_file: built-pipelines/pipelines.yaml
