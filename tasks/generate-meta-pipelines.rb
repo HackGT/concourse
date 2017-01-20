@@ -40,7 +40,7 @@ pipelines_desc = {
 [
   [pipeline_path, meta_pipeline],
   [secrets_file, secrets],
-  [out_file, pipelines_desc],
+  [(File.join out_dir, out_file), pipelines_desc],
 ]
 .each do |path, data|
   dumped = dump_yaml data

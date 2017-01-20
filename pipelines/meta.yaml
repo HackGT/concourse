@@ -73,6 +73,6 @@ jobs:
             path: ruby
             args:
               - ci/tasks/generate-meta-pipelines.rb
-      - put: main-pipeline
+      - put: main-pipelines
         params:
           pipelines_file: built-pipeline/pipelines.yaml
