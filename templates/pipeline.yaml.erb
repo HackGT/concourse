@@ -36,6 +36,25 @@ resources:
       - <%= pipeline[:git_path] %>
 <% end %>
 
+<% for app in pipeline[:git_apps] %>
+- name: <%= app['name'] %>
+  type: git
+  source:
+    uri: <%= app['git'] %>
+    branch: <%= app['branch'] || DEFAULT_BRANCH %>
+    version:
+      ref: <%= app[:git_ref] %>
+
+- name: <%= app['name'] %>-image
+  type: docker-image
+  source:
+    repository: <%= dockerhub_from_git app['git'] %>
+    tag: <%= app[:git_ref] %>
+    email: "{{dockerhub_email}}"
+    username: "{{dockerhub_user}}"
+    password: "{{dockerhub_pass}}"
+<% end %>
+
 <% if pipeline[:runnables].length > 0 %>
 - name: concourse-config
   type: git
@@ -53,7 +72,21 @@ resources:
     namespace: default
 <% end %>
 
+
 jobs:
+<% for app in pipeline[:git_apps] %>
+- name: build-<%= app['name'] %>-image
+  public: true
+  plan:
+  - get: <%= app['name'] %>
+    trigger: true
+  - put: <%= app['name'] %>-image
+    params:
+      build: <%= app['name'] %>
+    get_params:
+      skip_download: true
+<% end %>
+
 <% if pipeline[:runnables].length > 0 %>
 - name: deploy
   public: true
