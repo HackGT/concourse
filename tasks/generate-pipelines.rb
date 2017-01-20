@@ -47,22 +47,26 @@ pipe_cfg = YAML.load ERB.new(File.read PIPELINE_TEMPLATE).result(binding)
 
 # pipelines description
 pipelines_desc = {
-  'name' => pipeline[:name],
-  'team' => team,
-  'config_file' => pipeline_path,
-  'vars_files' => [secrets_file],
+  'pipelines' => [
+    'name' => pipeline[:name],
+    'team' => team,
+    'config_file' => pipeline_path,
+    'vars_files' => [secrets_file],
+  ],
 }
 
 # write everything to disk
 [
-  [pipeline_path, pipe_cfg],
-  [secrets_file, secrets],
-  [(File.join out_dir, out_file), pipelines_desc],
+  [pipeline_path, pipe_cfg, true],
+  [secrets_file, secrets, false],
+  [(File.join out_dir, out_file), pipelines_desc, true],
 ]
-.each do |path, data|
+.each do |path, data, display|
   dumped = dump_yaml data
   File.write path, dumped
-  puts
-  puts path
-  puts dumped
+  if display
+    puts
+    puts path
+    puts dumped
+  end
 end

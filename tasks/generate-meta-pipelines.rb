@@ -30,22 +30,26 @@ meta_pipeline = Dir[File.join biodomes, '*']
 
 # pipelines description
 pipelines_desc = {
-  'name' => 'meta',
-  'team' => team,
-  'config_file' => pipeline_path,
-  'vars_files' => [secrets_file],
+  'pipelines' => [
+    'name' => 'meta',
+    'team' => team,
+    'config_file' => pipeline_path,
+    'vars_files' => [secrets_file],
+  ],
 }
 
 # write everything to disk
 [
-  [pipeline_path, meta_pipeline],
-  [secrets_file, secrets],
-  [(File.join out_dir, out_file), pipelines_desc],
+  [pipeline_path, meta_pipeline, true],
+  [secrets_file, secrets, false],
+  [(File.join out_dir, out_file), pipelines_desc, true],
 ]
-.each do |path, data|
+.each do |path, data, display|
   dumped = dump_yaml data
   File.write path, dumped
-  puts
-  puts path
-  puts dumped
+  if display
+    puts
+    puts path
+    puts dumped
+  end
 end
