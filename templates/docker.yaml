@@ -1,0 +1,29 @@
+resources:
+- name: <%= app['name'] %>
+  type: git
+  source:
+    uri: <%= app['git'] %>
+    branch: <%= app['branch'] || DEFAULT_BRANCH %>
+    version:
+      ref: <%= app['git_ref'] %>
+
+- name: <%= app['name'] %>-image
+  type: docker-image
+  source:
+    repository: <%= dockerhub_from_git app['git'] %>
+    tag: <%= app['git_ref'] %>
+    email: "{{dockerhub_email}}"
+    username: "{{dockerhub_user}}"
+    password: "{{dockerhub_pass}}"
+
+jobs:
+- name: build-<%= app['name'] %>-image
+  public: true
+  plan:
+  - get: <%= app['name'] %>
+    trigger: true
+  - put: <%= app['name'] %>-image
+    params:
+      build: <%= app['name'] %>
+    get_params:
+      skip_download: true
