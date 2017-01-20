@@ -11,7 +11,7 @@ biodomes  = get_env 'PIPEDREAM_BIODOMES_DIR'
 # constants
 SOURCE_DIR = File.expand_path(File.dirname(__FILE__))
 BASE_PIPE = File.join SOURCE_DIR, '../pipelines/meta.yaml'
-META_TEMPLATE = File.join SOURCE_DIR, '../templates/meta-pipeline.yaml.erb'
+META_TEMPLATE = File.join SOURCE_DIR, '../templates/meta-pipeline.yaml'
 pipeline_path = File.join out_dir, '0001-gen-pipeline.yaml'
 secrets_file = File.join out_dir, 'secrets.yaml'
 
