@@ -49,11 +49,6 @@ jobs:
   <% end %>
   - put: <%= app['name'] %>-image
     params:
-      build: >
-        <% if app['config']['build'] %>
-          build-output
-        <% else %>
-          <%= app['name'] %>
-        <% end %>
+      build: <% if app['config']['build'] %>build-output<% else %><%= app['name'] %><% end %>
     get_params:
       skip_download: true
