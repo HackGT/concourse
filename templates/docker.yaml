@@ -15,7 +15,14 @@ resources:
     email: "{{dockerhub_email}}"
     username: "{{dockerhub_user}}"
     password: "{{dockerhub_pass}}"
-
+- name: <%= app['name'] %>-image-latest
+  type: docker-image
+  source:
+    repository: <%= dockerhub_from_git app['git'] %>
+    tag: latest
+    email: "{{dockerhub_email}}"
+    username: "{{dockerhub_user}}"
+    password: "{{dockerhub_pass}}"
 jobs:
 - name: build-<%= app['name'] %>-image
   public: true
@@ -48,6 +55,11 @@ jobs:
           - cp -a ../<%= app['name'] %>/{.??,}* . ; <%= build['run'] %>
   <% end %>
   - put: <%= app['name'] %>-image
+    params:
+      build: <% if app['config']['build'] %>build-output<% else %><%= app['name'] %><% end %>
+    get_params:
+      skip_download: true
+  - put: <%= app['name'] %>-image-latest
     params:
       build: <% if app['config']['build'] %>build-output<% else %><%= app['name'] %><% end %>
     get_params:
