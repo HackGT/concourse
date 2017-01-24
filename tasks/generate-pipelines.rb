@@ -9,6 +9,7 @@ out_file      = get_env 'PIPEDREAM_OUT_FILE'
 biodome_file  = get_env 'PIPEDREAM_BIODOME_FILE'
 
 # constants
+MAX_PORT = 65535
 SOURCE_DIR = File.expand_path(File.dirname(__FILE__))
 TEMPLATES_DIR = File.join SOURCE_DIR, '../templates/'
 PIPELINE_TEMPLATE = File.join SOURCE_DIR, '../templates/pipeline.yaml.erb'
@@ -19,6 +20,7 @@ class Pipeline
   def initialize config, biodome_file, secrets
     @biodome_file = File.expand_path biodome_file
     @pipeline = {}
+    @unique_port = 1024 - 1
 
     # collect pipeline data
     @data = {
@@ -77,9 +79,24 @@ class Pipeline
     @pipeline = merge_pipelines @pipeline, augment
   end
 
+  def get_unique_port
+    if @unique_port > MAX_PORT
+      raise 'used up too many unique ports'
+    else
+      @unique_port += 1
+    end
+  end
+
   def load template_name
     pipeline = self
     app = @app_context
+    template = Dir["#{TEMPLATES_DIR}/#{template_name}.*"][0]
+    ERB.new(File.read template).result(binding)
+  end
+
+  def load_with template_name, context
+    pipeline = self
+    app = context
     template = Dir["#{TEMPLATES_DIR}/#{template_name}.*"][0]
     ERB.new(File.read template).result(binding)
   end

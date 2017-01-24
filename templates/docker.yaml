@@ -54,13 +54,14 @@ jobs:
           - -c
           - cp -a ../<%= app['name'] %>/{.??,}* . ; <%= build['run'] %>
   <% end %>
+  <% dockerhub_build_dir = app['config']['build'] ? 'build-output' : app['name'] %>
   - put: <%= app['name'] %>-image
     params:
-      build: <% if app['config']['build'] %>build-output<% else %><%= app['name'] %><% end %>
+      build: <%= dockerhub_build_dir %>
     get_params:
       skip_download: true
   - put: <%= app['name'] %>-image-latest
     params:
-      build: <% if app['config']['build'] %>build-output<% else %><%= app['name'] %><% end %>
+      build: <%= dockerhub_build_dir %>
     get_params:
       skip_download: true

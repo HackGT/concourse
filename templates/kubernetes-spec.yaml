@@ -79,6 +79,8 @@ spec:
           limits:
             cpu: 10m
             memory: 20Mi
+<% proxied_apps = pipeline[:runnables].select { |a| a['port'] } %>
+<% if not proxied_apps.empty? %>
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -86,7 +88,7 @@ metadata:
   name: <%= pipeline[:name] %>
 spec:
   rules:
-<% for app in pipeline[:runnables] %>
+<% for app in proxied_apps %>
   - host: <%= app['name'] %>.<%= pipeline[:name] %>.<%= pipeline[:biodome]['domain'] %>
     http:
       paths:
@@ -94,7 +96,10 @@ spec:
           serviceName: <%= app['name'] %>-service
           servicePort: <%= app['port'] %>
 <% end %>
+<% end %>
 <% for app in pipeline[:runnables] %>
+<% unique_port = app['port'] ? pipeline.get_unique_port : nil %>
+<% if app['port'] %>
 ---
 apiVersion: v1
 kind: Service
@@ -107,10 +112,11 @@ spec:
     - name: <%= app['name'] %>-port
       port: <%= app['port'] %>
       protocol: <%= app['protocol'] %>
-      targetPort: <%= app['unique_port'] %>
+      targetPort: <%= unique_port %>
   selector:
     name: <%= app['name'] %>
   type: LoadBalancer
+<% end %>
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -126,13 +132,17 @@ spec:
     spec:
       containers:
       - name: <%= app['name'] %>-container
-        image: <%= app['dockerhub'] %>
+        image: <%= dockerhub_from_git app['git'] %>
+        <% if app['port'] %>
         ports:
         - name: <%= app['name'] %>-port
-          containerPort: <%= app['unique_port'] %>
+          containerPort: <%= unique_port %>
+        <% end %>
         env:
+        <% if app['port'] %>
         - name: PORT
-          value: "<%= app['unique_port'] %>"
+          value: "<%= unique_port %>"
+        <% end %>
         - name: UNIQUE_APP_ID
           value: <%= app['name'] %>
         <% for name, value in (pipeline[:env] || []) %>

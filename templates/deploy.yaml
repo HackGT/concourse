@@ -36,7 +36,7 @@ resources:
   type: k8s-resource
   source:
     url: "{{k8s_url}}"
-    ca_data: "{{k8s_ca_data}}"
+    skip_tls_verify: true
     username: "{{k8s_user}}"
     password: "{{k8s_pass}}"
     namespace: default
@@ -84,8 +84,9 @@ jobs:
       outputs:
       - name: built-config
       params:
+        <% kubes_spec = pipeline.load_with 'kubernetes-spec', app %>
         KUBERNETES_SPEC: |
-          <%= (pipeline.indent 10, (pipeline.load 'kubernetes-spec')).strip %>
+          <%= (pipeline.indent 10, kubes_spec).strip %>
       run:
         path: sh
         args:
