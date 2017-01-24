@@ -32,17 +32,11 @@ resources:
 <% end %>
 
 <% if pipeline[:runnables].length > 0 %>
-- name: concourse-config
-  type: git
-  source:
-    uri: https://github.com/hackgt/concourse.git
-    branch: master
-
 - name: hackgt-cluster
   type: k8s-resource
   source:
     url: "{{k8s_url}}"
-    skip_tls_verify: true
+    ca_data: "{{k8s_ca_data}}"
     username: "{{k8s_user}}"
     password: "{{k8s_pass}}"
     namespace: default
@@ -76,8 +70,6 @@ jobs:
       trigger: true
       passed: [build-<%= app['name'] %>-image]
     <% end %>
-    - get: concourse-config
-      trigger: true
   - task: build-k8s-config
     config:
       platform: linux
@@ -86,8 +78,6 @@ jobs:
         source:
           repository: busybox
       inputs:
-      - name: helm-charts
-      - name: concourse-config
       <% for app in pipeline[:runnables] %>
       - name: <%= app['name'] %>
       <% end %>
