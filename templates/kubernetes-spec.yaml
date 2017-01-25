@@ -109,10 +109,9 @@ metadata:
   name: <%= app['name'] %>-service
 spec:
   ports:
-    - name: <%= app['name'] %>-port
-      port: <%= app['run']['port'] %>
-      protocol: <%= app['run']['protocol'] || 'http' %>
-      targetPort: <%= unique_port %>
+  - port: <%= app['run']['port'] %>
+    protocol: <%= app['run']['protocol'] || 'TCP' %>
+    targetPort: <%= unique_port %>
   selector:
     name: <%= app['name'] %>
   type: LoadBalancer
@@ -135,8 +134,7 @@ spec:
         image: <%= dockerhub_from_git app['git'] %>:<%= app['git_ref'] %>
         <% if app['run']['port'] %>
         ports:
-        - name: <%= app['name'] %>-port
-          containerPort: <%= unique_port %>
+        - containerPort: <%= unique_port %>
         <% end %>
         env:
         <% if app['run']['port'] %>
