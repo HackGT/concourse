@@ -136,21 +136,17 @@ spec:
         <% end %>
         env:
         - name: UNIQUE_APP_ID
-          value: <%= app['name'] %>
-        <% if pipeline['env'] %>
-        <% for e in (pipeline[:env] | []) %>
+          value: <%= app['name'].to_s.inspect %>
+        <% for e in (pipeline[:env] || []) %>
         - name: <%= e['name'] %>
-          value: <%= e['value'] %>
+          value: <%= e['value'].to_s.inspect %>
         <% end %>
-        <% end %>
-        <% for a in (pipeline[:charts] | []) %>
+        <% for a in (pipeline[:charts] || []) %>
         - name: <%= a['helm'].upcase %>_HOST
-          value: <%= a['name'] %>
+          value: <%= a['name'].to_s.inspect %>
         <% end %>
-        <% if app['env'] %>
-        <% for env in (app['env']) %>
+        <% for env in (app['env'] || []) %>
         - name: <%= env['name'] %>
-          value: <%= env['value'] %>
-        <% end %>
+          value: <%= env['value'].to_s.inspect %>
         <% end %>
 <% end %>
