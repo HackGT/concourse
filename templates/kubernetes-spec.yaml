@@ -94,11 +94,10 @@ spec:
       paths:
       - backend:
           serviceName: <%= app['name'] %>-service
-          servicePort: <%= app['run']['port'] %>
+          servicePort: 80
 <% end %>
 <% end %>
 <% for app in pipeline[:runnables] %>
-<% unique_port = app['run']['port'] ? pipeline.get_unique_port : nil %>
 <% if app['run']['port'] %>
 ---
 apiVersion: v1
@@ -109,12 +108,11 @@ metadata:
   name: <%= app['name'] %>-service
 spec:
   ports:
-  - port: <%= app['run']['port'] %>
+  - port: 80
     protocol: <%= app['run']['protocol'] || 'TCP' %>
-    targetPort: <%= unique_port %>
+    targetPort: <%= app['run']['port'] %>
   selector:
     name: <%= app['name'] %>
-  type: LoadBalancer
 <% end %>
 ---
 apiVersion: extensions/v1beta1
@@ -134,21 +132,25 @@ spec:
         image: <%= dockerhub_from_git app['git'] %>:<%= app['git_ref'] %>
         <% if app['run']['port'] %>
         ports:
-        - containerPort: <%= unique_port %>
+        - containerPort: <%= app['run']['port'] %>
         <% end %>
         env:
-        <% if app['run']['port'] %>
-        - name: PORT
-          value: "<%= unique_port %>"
-        <% end %>
         - name: UNIQUE_APP_ID
           value: <%= app['name'] %>
-        <% for name, value in (pipeline[:env] || []) %>
-        - name: <%= name %>
-          value: <%= value %>
+        <% if pipeline['env'] %>
+        <% for e in (pipeline[:env] | []) %>
+        - name: <%= e['name'] %>
+          value: <%= e['value'] %>
         <% end %>
-        <% for app in pipeline[:charts] %>
-        - name: <%= app['helm'].upcase %>_HOST
-          value: <%= app['name'] %>
+        <% end %>
+        <% for a in (pipeline[:charts] | []) %>
+        - name: <%= a['helm'].upcase %>_HOST
+          value: <%= a['name'] %>
+        <% end %>
+        <% if app['env'] %>
+        <% for env in (app['env']) %>
+        - name: <%= env['name'] %>
+          value: <%= env['value'] %>
+        <% end %>
         <% end %>
 <% end %>

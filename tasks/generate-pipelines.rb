@@ -26,6 +26,7 @@ class Pipeline
     @data = {
       'charts' => config['apps'].select {|a| a.include? 'helm'},
       'runnables' => config['apps'].select {|a| a.include? 'run'},
+      'env' => config['env'],
       'git_apps' => config['apps'].select {|a| a.include? 'git'},
       'src_apps' => config['apps'].select {|a| Dir.exists? a['name']},
       'biodome' => config,
