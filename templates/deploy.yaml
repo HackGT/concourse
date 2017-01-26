@@ -62,6 +62,11 @@ jobs:
           <% if chart.include? 'version' %>
           version: <%= chart['version'] %>
           <% end %>
+          <% if chart.include? 'overrides' %>
+          overrides:
+            <% override_data = chart['overrides'].to_yaml().sub(/^---$/, '') %>
+            <%= (pipeline.indent 12, override_data).strip %>
+          <% end %>
       <% end %>
   <% end %>
   - aggregate:
