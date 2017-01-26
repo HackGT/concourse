@@ -35,13 +35,13 @@ metadata:
   labels:
     name: default-http-backend
   name: default-http-backend
-  spec:
-    ports:
-    - port: 80
-      protocol: TCP
-      targetPort: 8080
-    selector:
-      app: default-http-backend
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: default-http-backend
 ---
 apiVersion: v1
 kind: ReplicationController
