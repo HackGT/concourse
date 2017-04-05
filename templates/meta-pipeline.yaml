@@ -11,7 +11,7 @@ resources:
   - name: main-pipelines
     type: concourse-pipeline
     source:
-      target: http://concourse.hack.gt
+      target: https://concourse.hack.gt
       teams:
         - name: main
           username: "{{team_main_user}}"
