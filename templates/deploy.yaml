@@ -18,7 +18,7 @@ resources:
     ca_data: "{{k8s_ca_data}}"
     username: "{{k8s_user}}"
     password: "{{k8s_pass}}"
-    namespace: default
+    namespace: charts
 
 - name: helm-charts
   type: git
@@ -39,7 +39,7 @@ resources:
     skip_tls_verify: true
     username: "{{k8s_user}}"
     password: "{{k8s_pass}}"
-    namespace: default
+    namespace: charts
 <% end %>
 
 jobs:
